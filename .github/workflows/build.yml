@@ -17,8 +17,5 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Build with Gradle
+      - name: Build and Test
         run: ./gradlew build
-
-      - name: Run unit tests
-        run: ./gradlew test

@@ -26,7 +26,14 @@ public class OrderLine {
 
     private float totalPrice;
 
-    public void updateOrder(Order order) {
+    public OrderLine(Product product, Order order, int count, float totalPrice) {
+        this.product = product;
+        this.order = order;
+        this.count = count;
+        this.totalPrice = totalPrice;
+    }
+
+    public void createOrder(Order order) {
         this.order = order;
     }
 }

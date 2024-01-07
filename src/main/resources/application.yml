@@ -1,16 +1,16 @@
 spring:
+  config:
+    import: file:config.properties
+
   datasource:
     url: jdbc:mysql://localhost:3306/shop_db # TODO: docker 로 띄우기
     username: ${mysql_username}
     password: ${mysql_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
-
-# 사용 시 order_line 테이블이 없다는 에러
-#    hibernate:
-#      ddl-auto: validate
 
     generate-ddl: true
     show-sql: true

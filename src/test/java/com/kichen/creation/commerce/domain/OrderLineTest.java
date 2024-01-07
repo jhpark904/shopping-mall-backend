@@ -1,10 +1,7 @@
 package com.kichen.creation.commerce.domain;
 
-import org.aspectj.weaver.ast.Or;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class OrderLineTest {
 
@@ -13,7 +10,7 @@ class OrderLineTest {
         OrderLine orderLine = new OrderLine();
         Order order = new Order();
 
-        orderLine.updateOrder(order);
+        orderLine.createOrder(order);
         Assertions.assertThat(orderLine.getOrder()).isEqualTo(order);
     }
 }

@@ -1,4 +1,4 @@
-package com.kichen.creation.commerce.domain;
+package com.kichen.creation.commerce.order.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

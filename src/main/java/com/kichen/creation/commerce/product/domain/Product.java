@@ -1,15 +1,18 @@
-package com.kichen.creation.commerce.domain;
+package com.kichen.creation.commerce.product.domain;
 
-import com.kichen.creation.commerce.dto.ProductDto;
-import com.kichen.creation.commerce.exception.NotEnoughStockException;
+import com.kichen.creation.commerce.product.dto.ProductDto;
+import com.kichen.creation.commerce.product.dto.ProductResponseDto;
+import com.kichen.creation.commerce.product.exception.NotEnoughStockException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@EqualsAndHashCode
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,8 +49,8 @@ public class Product {
         stock -= quantity;
     }
 
-    public ProductDto toProductDto() {
-        return new ProductDto(
+    public ProductResponseDto toProductResponseDto() {
+        return new ProductResponseDto(
                 id,
                 name,
                 price,
@@ -55,11 +58,10 @@ public class Product {
         );
     }
 
-    public Product updateFromDto(ProductDto productDto) {
-        name = productDto.name();
-        price = productDto.price();
-        stock = productDto.stock();
-        return this;
+    public void update(ProductDto productDto) {
+        name = productDto.getName();
+        price = productDto.getPrice().floatValue();
+        stock = productDto.getStock();
     }
 
     private void validateQuantityPositive(int quantity) {

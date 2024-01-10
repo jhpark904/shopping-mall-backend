@@ -1,5 +1,6 @@
-package com.kichen.creation.commerce.domain;
+package com.kichen.creation.commerce.order.domain;
 
+import com.kichen.creation.commerce.product.domain.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

@@ -1,5 +1,7 @@
-package com.kichen.creation.commerce.domain;
+package com.kichen.creation.commerce.order.domain;
 
+import com.kichen.creation.commerce.order.domain.Order;
+import com.kichen.creation.commerce.order.domain.OrderLine;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -1,9 +1,12 @@
-package com.kichen.creation.commerce.domain;
+package com.kichen.creation.commerce.product.domain;
 
-import com.kichen.creation.commerce.dto.ProductDto;
-import com.kichen.creation.commerce.exception.NotEnoughStockException;
+import com.kichen.creation.commerce.product.dto.ProductDto;
+import com.kichen.creation.commerce.product.dto.ProductResponseDto;
+import com.kichen.creation.commerce.product.exception.NotEnoughStockException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -60,28 +63,28 @@ class ProductTest {
 
     @Test
     void toProductDto() {
-        ProductDto dto = product.toProductDto();
-        Assertions.assertThat(dto.id()).isEqualTo(product.getId());
-        Assertions.assertThat(dto.stock()).isEqualTo(product.getStock());
-        Assertions.assertThat(dto.name()).isEqualTo(product.getName());
-        Assertions.assertThat(dto.price()).isEqualTo(product.getPrice());
+        ProductResponseDto dto = product.toProductResponseDto();
+        Assertions.assertThat(dto.getId()).isEqualTo(product.getId());
+        Assertions.assertThat(dto.getStock()).isEqualTo(product.getStock());
+        Assertions.assertThat(dto.getName()).isEqualTo(product.getName());
+        Assertions.assertThat(dto.getPrice()).isEqualTo(product.getPrice());
     }
 
     @Test
     void updateFromDto() {
 
         String newName = "newTest";
-        float newPrice = 2f;
+        BigDecimal newPrice = BigDecimal.valueOf(2f);
         int newStock = 12;
 
         ProductDto productDto = mock();
-        when(productDto.name()).thenReturn(newName);
-        when(productDto.price()).thenReturn(newPrice);
-        when(productDto.stock()).thenReturn(newStock);
-        product.updateFromDto(productDto);
+        when(productDto.getName()).thenReturn(newName);
+        when(productDto.getPrice()).thenReturn(newPrice);
+        when(productDto.getStock()).thenReturn(newStock);
+        product.update(productDto);
 
         Assertions.assertThat(product.getName()).isEqualTo(newName);
-        Assertions.assertThat(product.getPrice()).isEqualTo(newPrice);
+        Assertions.assertThat(product.getPrice()).isEqualTo(newPrice.floatValue());
         Assertions.assertThat(product.getStock()).isEqualTo(newStock);
     }
 }

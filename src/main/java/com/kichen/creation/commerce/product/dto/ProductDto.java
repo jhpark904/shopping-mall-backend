@@ -18,7 +18,7 @@ public class ProductDto {
     @Digits(integer = 10, fraction = 2, message = "Invalid price: digit out of range")
     private final BigDecimal price;
 
-    @Min(value = 0, message = "Invalid Stock: Equals to zero or Less than zero")
+    @Min(value = 0, message = "Invalid Stock: Less than 0")
     @Digits(integer = 10, fraction = 0, message = "Invalid price: digit out of range")
     private final int stock;
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +23,16 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderLine> orderLineList = new ArrayList<>();
 
-    private boolean successful;
-
+    @CreatedDate
     private LocalDateTime orderDate;
 
-    public Order(boolean successful, LocalDateTime orderDate) {
-        this.successful = successful;
-        this.orderDate = orderDate;
-    }
+    public static Order createOrder(List<OrderLine> orderLines) {
+        Order order = new Order();
 
-    public void addOrderLine(OrderLine orderLine) {
-        orderLineList.add(orderLine);
-        orderLine.createOrder(this);
+        for (OrderLine orderLine: orderLines) {
+            order.orderLineList.add(orderLine);
+            orderLine.createOrder(order);
+        }
+        return order;
     }
 }

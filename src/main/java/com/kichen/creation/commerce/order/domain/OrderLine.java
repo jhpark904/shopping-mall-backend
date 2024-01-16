@@ -25,16 +25,13 @@ public class OrderLine {
 
     private int count;
 
-    private float totalPrice;
-
-    public OrderLine(Product product, Order order, int count, float totalPrice) {
+    public OrderLine(Product product, int count) {
         this.product = product;
-        this.order = order;
         this.count = count;
-        this.totalPrice = totalPrice;
     }
 
     public void createOrder(Order order) {
         this.order = order;
+        product.removeStock(count);
     }
 }

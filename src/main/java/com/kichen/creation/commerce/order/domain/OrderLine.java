@@ -1,6 +1,9 @@
 package com.kichen.creation.commerce.order.domain;
 
+import com.kichen.creation.commerce.order.dto.OrderLineResponseDto;
+import com.kichen.creation.commerce.order.exception.OrderFailureException;
 import com.kichen.creation.commerce.product.domain.Product;
+import com.kichen.creation.commerce.product.exception.NotEnoughStockException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,6 +35,18 @@ public class OrderLine {
 
     public void createOrder(Order order) {
         this.order = order;
-        product.removeStock(count);
+        try {
+            product.removeStock(count);
+        } catch (NotEnoughStockException e) {
+            throw new OrderFailureException("Order failed!", e);
+        }
+    }
+
+    public OrderLineResponseDto toOrderLineResponseDto() {
+        return new OrderLineResponseDto(
+                id,
+                product.toProductResponseDto(),
+                count
+        );
     }
 }

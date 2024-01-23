@@ -1,5 +1,6 @@
 package com.kichen.creation.commerce.order.domain;
 
+import com.kichen.creation.commerce.order.exception.OrderFailureException;
 import com.kichen.creation.commerce.product.domain.Product;
 import com.kichen.creation.commerce.product.exception.NotEnoughStockException;
 import org.assertj.core.api.Assertions;
@@ -29,6 +30,6 @@ class OrderLineTest {
         OrderLine orderLine = new OrderLine(product, testCount);
         doThrow(NotEnoughStockException.class).when(product).removeStock(testCount);
 
-        assertThrows(NotEnoughStockException.class, () -> orderLine.createOrder(order));
+        assertThrows(OrderFailureException.class, () -> orderLine.createOrder(order));
     }
 }

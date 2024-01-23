@@ -17,23 +17,23 @@ public class ProductV1Controller {
 
     private final ProductService productService;
 
-    @GetMapping("/products")
+    @GetMapping("/v1/products")
     public SuccessResponse<List<ProductResponseDto>> getAllProducts() {
         return new SuccessResponse<>(HttpStatus.OK.value(), "Success", productService.findAllProducts());
     }
 
-    @GetMapping("/products/{id}")
+    @GetMapping("/v1/products/{id}")
     public SuccessResponse<ProductResponseDto> getProduct(@PathVariable Long id) {
         return new SuccessResponse<>(HttpStatus.OK.value(), "Success", productService.findProduct(id));
     }
 
-    @PostMapping("/products")
+    @PostMapping("/v1/products")
     public SuccessResponse<?> createNewProduct(@RequestBody @Valid ProductDto productDto) {
        productService.createProduct(productDto);
        return new SuccessResponse<>(HttpStatus.OK.value(), "Success");
     }
 
-    @PutMapping("/products/{id}")
+    @PutMapping("/v1/products/{id}")
     public SuccessResponse<?> editProduct(@PathVariable Long id, @RequestBody @Valid ProductDto productDto) {
         productService.editProduct(id, productDto);
         return new SuccessResponse<>(HttpStatus.OK.value(), "Success");

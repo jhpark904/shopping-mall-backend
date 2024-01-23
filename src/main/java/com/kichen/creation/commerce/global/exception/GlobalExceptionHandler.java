@@ -1,5 +1,7 @@
 package com.kichen.creation.commerce.global.exception;
 
+import com.kichen.creation.commerce.order.exception.OrderFailureException;
+import com.kichen.creation.commerce.order.exception.OrderNotFoundException;
 import com.kichen.creation.commerce.product.exception.ProductNotFoundException;
 import com.kichen.creation.commerce.global.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -38,9 +40,31 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException ex) {
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(ex.getHttpStatusCode())
                 .body(new ErrorResponse(
-                        HttpStatus.NOT_FOUND.value(),
+                        ex.getHttpStatusCode(),
+                        ex.getMessage(),
+                        LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(OrderFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOrderFailureException(OrderFailureException ex) {
+
+        return ResponseEntity
+                .status(ex.getHttpStatusCode())
+                .body(new ErrorResponse(
+                        ex.getHttpStatusCode(),
+                        ex.getMessage(),
+                        LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotFoundException(OrderNotFoundException ex) {
+
+        return ResponseEntity
+                .status(ex.getHttpStatusCode())
+                .body(new ErrorResponse(
+                        ex.getHttpStatusCode(),
                         ex.getMessage(),
                         LocalDateTime.now()));
     }

@@ -1,7 +1,10 @@
 package com.kichen.creation.commerce.order.domain;
 
+import com.kichen.creation.commerce.order.exception.OrderFailureException;
 import com.kichen.creation.commerce.product.domain.Product;
+import com.kichen.creation.commerce.product.domain.TestProduct;
 import com.kichen.creation.commerce.product.exception.NotEnoughStockException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -23,7 +26,7 @@ class OrderTest {
     void createOrderSuccess() {
         List<OrderLine> orderLines = new ArrayList<>();
         orderLines.add(orderLine);
-        Order order = Order.createOrder(orderLines);
+        Order order = Order.create(orderLines);
 
         assertEquals(order.getOrderLineList(), orderLines);
     }
@@ -34,28 +37,35 @@ class OrderTest {
         orderLines.add(orderLine);
         doThrow(NotEnoughStockException.class).when(product).removeStock(testCount);
 
-        assertThrows(NotEnoughStockException.class, () -> Order.createOrder(orderLines));
+        assertThrows(OrderFailureException.class, () -> Order.create(orderLines));
     }
 
     @Test
-    void createOrderMultiThreadAccess() {
-        int poolSize = 5;
+    void createOrderMultiThreadAccess() throws InterruptedException {
+        int poolSize = 10000;
         List<OrderLine> orderLines = new ArrayList<>();
-        orderLines.add(orderLine);
+        Product testProduct = new TestProduct("test", 10f, 10);
+        OrderLine testOrderLine = new OrderLine(testProduct, testCount);
+        orderLines.add(testOrderLine);
+
         CountDownLatch latch = new CountDownLatch(poolSize);
+        CountDownLatch latch2 = new CountDownLatch(poolSize);
 
         ExecutorService executorService = Executors.newFixedThreadPool(poolSize);
         for (int i=0; i<poolSize; i++) {
             executorService.submit(() -> {
                 try {
-                    Order.createOrder(orderLines);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                latch.countDown();
+                    latch.await();
+                    Order.create(orderLines);
+                } catch (Exception e) {}
+
+                latch2.countDown();
             });
+
+            latch.countDown();
         }
 
-        try { latch.await(); } catch (InterruptedException e) {}
+        latch2.await();
+        Assertions.assertThat(testProduct.getStock()).isLessThan(0);
     }
 }

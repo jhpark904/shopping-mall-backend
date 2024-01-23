@@ -5,7 +5,6 @@ import com.kichen.creation.commerce.product.dto.ProductDto;
 import com.kichen.creation.commerce.product.dto.ProductResponseDto;
 import com.kichen.creation.commerce.product.exception.ProductNotFoundException;
 import com.kichen.creation.commerce.product.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -48,11 +47,8 @@ public class ProductService {
     }
 
     private Product findProductFromRepository(@NonNull Long id) {
-        try {
-            return productRepository.getReferenceById(id);
-
-        } catch (EntityNotFoundException e) {
-            throw new ProductNotFoundException("Product is not found!", e);
-        }
+        return productRepository.findById(id).orElseThrow(
+                () -> new ProductNotFoundException("Product is not found!")
+        );
     }
 }

@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  database:
+    container_name: mysql_db
+    image: mysql/mysql-server:8.0.3
+    environment:
+      MYSQL_DATABASE: shop_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    command:
+      - "mysqld"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    networks:
+      - network
+
+  application:
+    container_name: spring-server
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/shop_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+    depends_on:
+      - database
+    networks:
+      - network
+
+networks:
+  network:

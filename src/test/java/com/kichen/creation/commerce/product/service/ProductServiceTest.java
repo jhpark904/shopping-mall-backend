@@ -5,10 +5,10 @@ import com.kichen.creation.commerce.product.dto.ProductDto;
 import com.kichen.creation.commerce.product.dto.ProductResponseDto;
 import com.kichen.creation.commerce.product.exception.ProductNotFoundException;
 import com.kichen.creation.commerce.product.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -42,7 +42,7 @@ class ProductServiceTest {
 
     @Test
     void editProduct() {
-        when(productRepository.getReferenceById(testId)).thenReturn(testProduct);
+        when(productRepository.findById(testId)).thenReturn(Optional.of(testProduct));
         productService.editProduct(testId, testProductDto);
 
         verify(productRepository).save(any(Product.class));
@@ -50,22 +50,22 @@ class ProductServiceTest {
 
     @Test
     void editProductDoesNotExist() {
-        when(productRepository.getReferenceById(testId)).thenThrow(EntityNotFoundException.class);
+        when(productRepository.findById(testId)).thenReturn(Optional.empty());
         assertThrows(ProductNotFoundException.class, () -> productService.editProduct(testId, testProductDto));
     }
 
     @Test
     void findProduct() {
         Long testId = 1L;
-        when(productRepository.getReferenceById(testId)).thenReturn(testProduct);
+        when(productRepository.findById(testId)).thenReturn(Optional.of(testProduct));
         when(testProduct.toProductResponseDto()).thenReturn(testProductResponseDto);
         productService.findProduct(testId);
-        verify(productRepository).getReferenceById(testId);
+        verify(productRepository).findById(testId);
     }
 
     @Test
     void findProductDoesNotExist() {
-        when(productRepository.getReferenceById(testId)).thenThrow(EntityNotFoundException.class);
+        when(productRepository.findById(testId)).thenReturn(Optional.empty());
         assertThrows(ProductNotFoundException.class, () -> productService.findProduct(testId));
     }
 

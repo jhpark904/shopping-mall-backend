@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,12 +29,23 @@ public class OrderLine {
 
     private int count;
 
-    public OrderLine(Product product, int count) {
+    @Getter
+    private float cost;
+
+    public OrderLine(
+            @NonNull Product product,
+            int count
+    ) {
+        validateCount(count);
+
         this.product = product;
         this.count = count;
+        this.cost = product.getPrice() * count;
     }
 
-    public void createOrder(Order order) {
+    public void createOrder(
+            @NonNull Order order
+    ) {
         this.order = order;
         try {
             product.removeStock(count);
@@ -46,7 +58,14 @@ public class OrderLine {
         return new OrderLineResponseDto(
                 id,
                 product.toProductResponseDto(),
-                count
+                count,
+                cost
         );
+    }
+
+    private void validateCount(int count) {
+        if (count < 1) {
+            throw new IllegalArgumentException("Count cannot be less than 1!");
+        }
     }
 }

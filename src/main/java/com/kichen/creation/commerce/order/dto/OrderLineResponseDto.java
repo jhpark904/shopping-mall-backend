@@ -6,8 +6,6 @@ import lombok.NonNull;
 
 @Getter
 public class OrderLineResponseDto {
-    private static final float ONE_HUNDRED_FLOAT = 100f;
-
     private final Long id;
 
     private final ProductResponseDto product;
@@ -19,19 +17,27 @@ public class OrderLineResponseDto {
     public OrderLineResponseDto(
             @NonNull Long id,
             @NonNull ProductResponseDto product,
-            int count
+            int count,
+            float cost
     ) {
         validateCount(count);
+        validateCost(cost);
 
         this.id = id;
         this.product = product;
         this.count = count;
-        this.cost = Math.round(count * product.getPrice() * ONE_HUNDRED_FLOAT) / ONE_HUNDRED_FLOAT;
+        this.cost = cost;
     }
 
     private void validateCount(int count) {
         if (count < 1) {
             throw new IllegalArgumentException("Count cannot be less than 1!");
+        }
+    }
+
+    private void validateCost(float cost) {
+        if (cost <= 0) {
+            throw new IllegalArgumentException("Cost has to be greater than 0!");
         }
     }
 }

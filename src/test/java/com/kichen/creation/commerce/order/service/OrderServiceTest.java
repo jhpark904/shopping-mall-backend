@@ -1,5 +1,7 @@
 package com.kichen.creation.commerce.order.service;
 
+import com.kichen.creation.commerce.order.cost.PricingStrategy;
+import com.kichen.creation.commerce.order.cost.SimplePricingStrategy;
 import com.kichen.creation.commerce.order.domain.Order;
 import com.kichen.creation.commerce.order.dto.OrderLineRequestDto;
 import com.kichen.creation.commerce.order.dto.OrderResponseDto;
@@ -25,7 +27,9 @@ class OrderServiceTest {
 
     ProductRepository productRepository = mock();
 
-    OrderService orderService = new OrderService(orderRepository, productRepository);
+    PricingStrategy pricingStrategy = new SimplePricingStrategy();
+
+    OrderService orderService = new OrderService(orderRepository, productRepository, pricingStrategy);
 
     Long testId = 0L;
     String testName = "testProduct";

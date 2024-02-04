@@ -1,5 +1,6 @@
 package com.kichen.creation.commerce.order.service;
 
+import com.kichen.creation.commerce.order.cost.PricingStrategy;
 import com.kichen.creation.commerce.order.domain.Order;
 import com.kichen.creation.commerce.order.domain.OrderLine;
 import com.kichen.creation.commerce.order.dto.OrderLineRequestDto;
@@ -21,12 +22,15 @@ import java.util.List;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final PricingStrategy pricingStrategy;
 
     @Transactional
     public void createOrder(@NonNull List<OrderLineRequestDto> orderLineRequestDtoList) {
-        Order order = Order.create(
-                orderLineRequestDtoList.stream().map(this::convertToOrderLine).toList()
+        Order order = new Order(
+                orderLineRequestDtoList.stream().map(this::convertToOrderLine).toList(),
+                pricingStrategy
         );
+
         orderRepository.save(order);
     }
 

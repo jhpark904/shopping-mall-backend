@@ -1,5 +1,7 @@
 [versions]
 mysqlConnector = "8.0.32"
+redisson = "3.26.0"
 
 [libraries]
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnector" }
+redisson-spring-boot = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }

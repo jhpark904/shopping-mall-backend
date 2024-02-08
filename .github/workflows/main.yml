@@ -11,13 +11,18 @@ jobs:
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
-          MYSQL_USER: user
-          MYSQL_PASSWORD: 1234
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.TEST_SPRING_DATASOURCE_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.TEST_SPRING_DATASOURCE_PASSWORD }}
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout Repository
@@ -34,10 +39,29 @@ jobs:
 
       - name: Test
         run: ./gradlew test
+        env:
+          TEST_SPRING_DATASOURCE_DRIVER: ${{ secrets.TEST_SPRING_DATASOURCE_DRIVER }}
+          TEST_SPRING_DATASOURCE_URL: ${{ secrets.TEST_SPRING_DATASOURCE_URL }}
+          TEST_REDIS_HOST: ${{ secrets.TEST_REDIS_HOST }}
+          TEST_REDIS_PORT: ${{ secrets.TEST_REDIS_PORT }}
+          TEST_SPRING_DATASOURCE_USERNAME: ${{ secrets.TEST_SPRING_DATASOURCE_USERNAME }}
+          TEST_SPRING_DATASOURCE_PASSWORD: ${{ secrets.TEST_SPRING_DATASOURCE_PASSWORD }}
+
+      - name: Notify on Slack
+        run: |
+          if [[ "${{ job.status }}" == 'success' ]]; then
+            message="Build and test passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          else
+            message="Build or test failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          fi
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   Docker:
     needs: Build-and-Test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout Repository
@@ -54,3 +78,14 @@ jobs:
 
       - name: Push Image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce
+
+      - name: Notify on Slack
+        run: |
+          if [[ "${{ job.status }}" == 'success' ]]; then
+            message="Docker step passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          else
+            message="Docker step failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          fi
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

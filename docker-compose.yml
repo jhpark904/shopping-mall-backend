@@ -18,6 +18,13 @@ services:
     networks:
       - network
 
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
   application:
     container_name: spring-server
     restart: always
@@ -31,8 +38,11 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: 1234
       SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - database
+      - redis
     networks:
       - network
 

@@ -1,4 +1,4 @@
-package com.kitchen.creation.commerce.global.redis;
+package com.kitchen.creation.commerce.redis;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

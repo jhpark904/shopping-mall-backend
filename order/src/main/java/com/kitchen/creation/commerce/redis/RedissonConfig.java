@@ -1,4 +1,4 @@
-package com.kitchen.creation.commerce;
+package com.kitchen.creation.commerce.redis;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

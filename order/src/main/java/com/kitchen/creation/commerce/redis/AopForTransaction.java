@@ -1,4 +1,4 @@
-package com.kitchen.creation.commerce.global.redis;
+package com.kitchen.creation.commerce.redis;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class AopForTransaction {
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public Object proceed(final ProceedingJoinPoint joinPoint) throws Throwable {
         return joinPoint.proceed();
     }

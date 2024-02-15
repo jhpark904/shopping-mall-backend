@@ -81,15 +81,17 @@ class CommerceApplicationTests {
 
     @Test
     void createOrderMultiThreadOneOrderPass() throws InterruptedException {
+        int poolSize = 1000;
 
-        runOrderCallables(10000, 50);
+        runOrderCallables(poolSize, 50);
 
         latch.await();
         Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(1);
+        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
+                .isEqualTo(0);
 
         // OrderFailException 이 poolSize -1 번 일어날 것 이라고 예상
-        // 아래 Assertion 이 fail
-//        Assertions.assertThat(errorLatch.getCount()).isEqualTo(0);
+//        Assertions.assertThat(errorLatch.getCount()).isEqualTo(poolSize - 1);
     }
 
     @Test
@@ -103,10 +105,8 @@ class CommerceApplicationTests {
         Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(poolSize);
         Assertions.assertThat(errorLatch.getCount()).isEqualTo(poolSize - 1);
 
-        // jpa 비관적 락 사용 시
-        // read only 에서 실행할 수 없다는 에러
-//        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
-//                .isEqualTo(0);
+        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
+                .isEqualTo(0);
     }
 
     static class CreateOrderCallable implements Callable<Order> {

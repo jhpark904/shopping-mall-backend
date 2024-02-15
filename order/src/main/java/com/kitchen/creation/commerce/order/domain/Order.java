@@ -34,18 +34,20 @@ public class Order {
 
     private float totalCost;
 
-    public Order(
+    public static Order createOrder(
             @NonNull List<OrderLine> orderLines,
             @NonNull PricingStrategy pricingStrategy
-            ) {
-        validateOrderLineList(orderLines);
+    ) {
+        Order order = new Order();
+        order.validateOrderLineList(orderLines);
 
         for (OrderLine orderLine: orderLines) {
-            orderLineList.add(orderLine);
-            orderLine.createOrder(this);
+            order.orderLineList.add(orderLine);
+            orderLine.createOrder(order);
         }
 
-        totalCost = pricingStrategy.calculatePrice(orderLines);
+        order.totalCost = pricingStrategy.calculatePrice(orderLines);
+        return order;
     }
 
     public OrderResponseDto toOrderResponseDto() {

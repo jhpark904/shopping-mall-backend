@@ -26,7 +26,7 @@ class OrderTest {
     void createOrderSuccess() {
         List<OrderLine> orderLines = new ArrayList<>();
         orderLines.add(orderLine);
-        Order order = new Order(orderLines, pricingStrategy);
+        Order order = Order.createOrder(orderLines, pricingStrategy);
 
         assertEquals(order.getOrderLineList(), orderLines);
     }
@@ -37,6 +37,6 @@ class OrderTest {
         orderLines.add(orderLine);
         doThrow(NotEnoughStockException.class).when(product).removeStock(testCount);
 
-        assertThrows(OrderFailureException.class, () -> new Order(orderLines, pricingStrategy));
+        assertThrows(OrderFailureException.class, () -> Order.createOrder(orderLines, pricingStrategy));
     }
 }

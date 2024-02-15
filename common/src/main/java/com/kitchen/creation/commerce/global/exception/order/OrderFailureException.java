@@ -10,8 +10,4 @@ public class OrderFailureException extends RuntimeException {
     public OrderFailureException(String message, Throwable cause) {
         super(message, cause);
     }
-
-    public OrderFailureException(String message) {
-        super(message);
-    }
 }

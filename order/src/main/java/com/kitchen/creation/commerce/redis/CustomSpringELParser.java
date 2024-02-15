@@ -16,11 +16,7 @@ public class CustomSpringELParser {
         for (int i = 0; i < parameterNames.length; i++) {
             context.setVariable(parameterNames[i], args[i]);
         }
-        try {
-            return parser.parseExpression(key).getValue(context, Object.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new Object();
-        }
+
+        return parser.parseExpression(key).getValue(context, Object.class);
     }
 }

@@ -3,6 +3,12 @@ name: Build and Test
 on:
   push:
 
+env:
+  AWS_REGION: us-east-1
+#  AWS_S3_BUCKET: e-commerce-code-deploy-bucket
+  AWS_CODE_DEPLOY_APPLICATION: E-Commerce-API
+  AWS_CODE_DEPLOY_GROUP: e-commerce-api-group
+
 jobs:
   Build-and-Test:
     runs-on: ubuntu-latest
@@ -58,10 +64,10 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  Docker:
+  Deploy:
     needs: Build-and-Test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+#    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout Repository
@@ -73,24 +79,37 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Api Image
+      - name: Build Docker Api Image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce -f Dockerfile-api .
 
-      - name: Push Api Image
+      - name: Push Docker Api Image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce
 
-      - name: Build Admin Image
+      - name: Build Docker Admin Image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce-admin -f Dockerfile-admin .
 
-      - name: Push Admin Image
+      - name: Push Docker Admin Image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce-admin
+
+      - name: Configure AWS credential
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
+
+#      - name: Upload to S3
+#        run: aws deploy push --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --ignore-hidden-files --s3-location s3://$AWS_S3_BUCKET/cicdtest/$GITHUB_SHA.zip --source .
+
+      - name: Deploy to EC2
+        run: aws deploy create-deployment --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} # --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
 
       - name: Notify on Slack
         run: |
           if [[ "${{ job.status }}" == 'success' ]]; then
-            message="Docker step passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+            message="Deploy step passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
           else
-            message="Docker step failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+            message="Deploy step failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
           fi
           curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
         env:

@@ -8,6 +8,7 @@ env:
 #  AWS_S3_BUCKET: e-commerce-code-deploy-bucket
   AWS_CODE_DEPLOY_APPLICATION: E-Commerce-API
   AWS_CODE_DEPLOY_GROUP: e-commerce-api-group
+  ECR_REPOSITORY: e-commerce-api
 
 jobs:
   Build-and-Test:
@@ -99,16 +100,46 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: setting-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: container-nestjs
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.setting-task-definition.outputs.task-definition }}
+          service: e-commerce-service
+          cluster: ECommerceCluster
+          wait-for-service-stability: false
+
 #      - name: Upload to S3
 #        run: aws deploy push --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --ignore-hidden-files --s3-location s3://$AWS_S3_BUCKET/cicdtest/$GITHUB_SHA.zip --source .
 
-      - name: Deploy to EC2
-        run: |
-          aws deploy create-deployment \
-            --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} \
-            --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} \
-            --revision revisionType=AppSpecContent
+#      - name: Deploy to EC2
+#        run: |
+#          aws deploy create-deployment \
+#            --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} \
+#            --deployment-config-name CodeDeployDefault.AllAtOnce \
+#            --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} \
+#            --revision revisionType=AppSpecContent
         # --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
 
       - name: Notify on Slack

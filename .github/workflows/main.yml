@@ -54,6 +54,7 @@ jobs:
           TEST_SPRING_DATASOURCE_PASSWORD: ${{ secrets.TEST_SPRING_DATASOURCE_PASSWORD }}
 
       - name: Notify on Slack
+        if: always()
         run: |
           if [[ "${{ job.status }}" == 'success' ]]; then
             message="Build and test passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
@@ -102,9 +103,15 @@ jobs:
 #        run: aws deploy push --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --ignore-hidden-files --s3-location s3://$AWS_S3_BUCKET/cicdtest/$GITHUB_SHA.zip --source .
 
       - name: Deploy to EC2
-        run: aws deploy create-deployment --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} # --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
+        run: aws deploy create-deployment \
+          --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} \
+          --revision revisionType=AppSpecContent
+        # --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
 
       - name: Notify on Slack
+        if: always()
         run: |
           if [[ "${{ job.status }}" == 'success' ]]; then
             message="Deploy step passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"

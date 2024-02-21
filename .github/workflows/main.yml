@@ -119,7 +119,7 @@ jobs:
           container-name: e-commerce-admin
           image: ${{ steps.build-admin-image.outputs.image }}
 
-      - name: Deploy Amazon ECS task definition
+      - name: Deploy Amazon ECS task definition for api
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.setting-api-task-definition.outputs.task-definition }}
@@ -127,11 +127,11 @@ jobs:
           cluster: ECommerceCluster
           wait-for-service-stability: false
 
-      - name: Deploy Amazon ECS task definition
+      - name: Deploy Amazon ECS task definition for Admin
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.setting-admin-task-definition.outputs.task-definition }}
-          service: e-commerce-service
+          service: e-commerce-admin
           cluster: ECommerceCluster
           wait-for-service-stability: false
 

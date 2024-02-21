@@ -131,7 +131,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.setting-admin-task-definition.outputs.task-definition }}
-          service: e-commerce-admin
+          service: e-commerce-admin-service
           cluster: ECommerceCluster
           wait-for-service-stability: false
 

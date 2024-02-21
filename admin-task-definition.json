@@ -1,0 +1,117 @@
+{
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:265316239950:task-definition/e-commerce-admin:1",
+  "containerDefinitions": [
+    {
+      "name": "e-commerce-admin",
+      "image": "",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "e-commerce-admin-8080-tcp",
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_HOST::"
+        },
+        {
+          "name": "REDIS_PORT",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_PORT::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_DRIVER",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_DRIVER::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_PASSWORD::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_URL::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_USERNAME::"
+        }
+      ],
+      "ulimits": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/e-commerce-admin",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      }
+    }
+  ],
+  "family": "e-commerce-admin",
+  "taskRoleArn": "arn:aws:iam::265316239950:role/ecs-tasks-role",
+  "executionRoleArn": "arn:aws:iam::265316239950:role/ecs-tasks-role",
+  "networkMode": "awsvpc",
+  "revision": 1,
+  "volumes": [],
+  "status": "ACTIVE",
+  "requiresAttributes": [
+    {
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "ecs.capability.secrets.asm.environment-variables"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "name": "ecs.capability.task-eni"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+    }
+  ],
+  "placementConstraints": [],
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "registeredAt": "2024-02-21T00:04:22.393Z",
+  "registeredBy": "arn:aws:iam::265316239950:root",
+  "tags": []
+}

@@ -89,9 +89,8 @@ class CommerceApplicationTests {
         Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(1);
         Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
                 .isEqualTo(0);
-
-        // OrderFailException 이 poolSize -1 번 일어날 것 이라고 예상
-//        Assertions.assertThat(errorLatch.getCount()).isEqualTo(poolSize - 1);
+        // exception except 1 order
+        Assertions.assertThat(errorLatch.getCount()).isEqualTo(0);
     }
 
     @Test
@@ -103,8 +102,8 @@ class CommerceApplicationTests {
 
         latch.await();
         Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(poolSize);
+        // no exception
         Assertions.assertThat(errorLatch.getCount()).isEqualTo(poolSize - 1);
-
         Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
                 .isEqualTo(0);
     }

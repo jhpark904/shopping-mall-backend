@@ -1,13 +1,10 @@
-name: Build and Test
+name: Build, Test & Deploy
 
 on:
   push:
 
 env:
   AWS_REGION: us-east-1
-#  AWS_S3_BUCKET: e-commerce-code-deploy-bucket
-  AWS_CODE_DEPLOY_APPLICATION: E-Commerce-API
-  AWS_CODE_DEPLOY_GROUP: e-commerce-api-group
   ECR_REPOSITORY: e-commerce-api
 
 jobs:
@@ -75,24 +72,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-#      - name: Login to Docker Hub
-#        uses: docker/login-action@v3
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
-#
-#      - name: Build Docker Api Image
-#        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce -f Dockerfile-api .
-#
-#      - name: Push Docker Api Image
-#        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce
-#
-#      - name: Build Docker Admin Image
-#        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce-admin -f Dockerfile-admin .
-#
-#      - name: Push Docker Admin Image
-#        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/e-commerce-admin
-#
       - name: Configure AWS credential
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -104,8 +83,8 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+      - name: Build, tag, and push API image to Amazon ECR
+        id: build-api-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -114,33 +93,47 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: setting-task-definition
+      - name: Build, tag, and push Admin image to Amazon ECR
+        id: build-admin-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile-admin .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Fill in the new image ID in the Amazon ECS task definition for API
+        id: setting-api-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: api-task-definition.json
           container-name: e-commerce-api
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-api-image.outputs.image }}
+
+      - name: Fill in the new image ID in the Amazon ECS task definition for Admin
+        id: setting-admin-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: admin-task-definition.json
+          container-name: e-commerce-admin
+          image: ${{ steps.build-admin-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.setting-task-definition.outputs.task-definition }}
+          task-definition: ${{ steps.setting-api-task-definition.outputs.task-definition }}
           service: e-commerce-service
           cluster: ECommerceCluster
           wait-for-service-stability: false
 
-#      - name: Upload to S3
-#        run: aws deploy push --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --ignore-hidden-files --s3-location s3://$AWS_S3_BUCKET/cicdtest/$GITHUB_SHA.zip --source .
-
-#      - name: Deploy to EC2
-#        run: |
-#          aws deploy create-deployment \
-#            --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} \
-#            --deployment-config-name CodeDeployDefault.AllAtOnce \
-#            --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} \
-#            --revision revisionType=AppSpecContent
-        # --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.setting-admin-task-definition.outputs.task-definition }}
+          service: e-commerce-service
+          cluster: ECommerceCluster
+          wait-for-service-stability: false
 
       - name: Notify on Slack
         if: always()

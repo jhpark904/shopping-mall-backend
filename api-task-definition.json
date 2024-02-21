@@ -3,7 +3,7 @@
   "containerDefinitions": [
     {
       "name": "e-commerce-api",
-      "image": "265316239950.dkr.ecr.us-east-1.amazonaws.com/e-commerce-api:22390a2a1a75085a803edcbe4e4c5c2c408d6763",
+      "image": "",
       "cpu": 0,
       "portMappings": [
         {

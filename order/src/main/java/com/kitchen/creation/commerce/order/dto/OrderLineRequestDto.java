@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 @Getter
 public class OrderLineRequestDto {
-    @Getter
     private final Long productId;
 
     private final int count;

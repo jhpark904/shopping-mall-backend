@@ -1,5 +1,5 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:265316239950:task-definition/e-commerce-task-definition:1",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:265316239950:task-definition/e-commerce-task-definition:3",
   "containerDefinitions": [
     {
       "name": "e-commerce-api",
@@ -15,35 +15,36 @@
         }
       ],
       "essential": true,
-      "environment": [
-        {
-          "name": "SPRING_DATASOURCE_USERNAME",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_USERNAME::"
-        },
-        {
-          "name": "REDIS_HOST",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_HOST::"
-        },
-        {
-          "name": "SPRING_DATASOURCE_DRIVER",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_DRIVER::"
-        },
-        {
-          "name": "REDIS_PORT",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_PORT::"
-        },
-        {
-          "name": "SPRING_DATASOURCE_URL",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_URL::"
-        },
-        {
-          "name": "SPRING_DATASOURCE_PASSWORD",
-          "value": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_PASSWORD::"
-        }
-      ],
+      "environment": [],
       "environmentFiles": [],
       "mountPoints": [],
       "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_HOST::"
+        },
+        {
+          "name": "REDIS_PORT",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:REDIS_PORT::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_DRIVER",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_DRIVER::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_PASSWORD::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_URL::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:265316239950:secret:e-commerce-secrets-pQPh4q:SPRING_DATASOURCE_USERNAME::"
+        }
+      ],
       "ulimits": [],
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -61,7 +62,7 @@
   "taskRoleArn": "arn:aws:iam::265316239950:role/ecs-tasks-role",
   "executionRoleArn": "arn:aws:iam::265316239950:role/ecs-tasks-role",
   "networkMode": "awsvpc",
-  "revision": 1,
+  "revision": 3,
   "volumes": [],
   "status": "ACTIVE",
   "requiresAttributes": [
@@ -76,6 +77,9 @@
     },
     {
       "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "ecs.capability.secrets.asm.environment-variables"
     },
     {
       "name": "com.amazonaws.ecs.capability.task-iam-role"
@@ -107,7 +111,7 @@
     "cpuArchitecture": "X86_64",
     "operatingSystemFamily": "LINUX"
   },
-  "registeredAt": "2024-02-19T23:43:50.154Z",
+  "registeredAt": "2024-02-20T00:19:03.073Z",
   "registeredBy": "arn:aws:iam::265316239950:root",
   "tags": []
 }

@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootTest
 class CommerceApplicationTests {
@@ -37,25 +38,67 @@ class CommerceApplicationTests {
 
     private CountDownLatch latch;
 
-    private CountDownLatch errorLatch;
+    private final AtomicInteger errorCount = new AtomicInteger(0);
 
     @BeforeEach
     void setUp() {
         orderRepository.deleteAll();
         productRepository.deleteAll();
+        errorCount.set(0);
+    }
+
+    @Test
+    void createOrderMultiThreadOneOrderPass() throws InterruptedException {
+        int poolSize = 10000;
+        int orderAmount = 50;
+        int stock = 50;
 
         // Create a new product and save to db
         Product product = new Product(
                 "test product",
                 32.0f,
-                50
+                stock
         );
         savedProduct = productRepository.save(product);
+
+        runOrderCallables(poolSize, orderAmount);
+
+        latch.await();
+        Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(1);
+        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
+                .isEqualTo(0);
+        // exception except 1 order
+        Assertions.assertThat(errorCount.get()).isEqualTo(
+                calculateErrorCount(orderAmount, poolSize, stock)
+        );
+    }
+
+    @Test
+    void createOrderMultiThreadMultipleOrderPass() throws InterruptedException {
+        int poolSize = 10;
+        int orderAmount = 5;
+        int stock = 50;
+
+        // Create a new product and save to db
+        Product product = new Product(
+                "test product",
+                32.0f,
+                stock
+        );
+        savedProduct = productRepository.save(product);
+
+        runOrderCallables(poolSize, orderAmount);
+
+        latch.await();
+        Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(poolSize);
+        // no exception
+        Assertions.assertThat(errorCount.get()).isEqualTo(calculateErrorCount(orderAmount, poolSize, stock));
+        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
+                .isEqualTo(0);
     }
 
     private void runOrderCallables(int poolSize, int orderAmount) throws InterruptedException {
         latch = new CountDownLatch(poolSize);
-        errorLatch = new CountDownLatch(poolSize - 1);
 
         Collection<CreateOrderCallable> createOrderCallableList = new ArrayList<>();
         for (int i=0; i<poolSize; i++) {
@@ -71,7 +114,7 @@ class CommerceApplicationTests {
                     orderService,
                     orderLineList,
                     latch,
-                    errorLatch
+                    errorCount
             ));
         }
 
@@ -79,33 +122,17 @@ class CommerceApplicationTests {
         executorService.invokeAll(createOrderCallableList);
     }
 
-    @Test
-    void createOrderMultiThreadOneOrderPass() throws InterruptedException {
-        int poolSize = 1000;
+    private int calculateErrorCount(int orderAmount, int poolSize, int stock) {
+        int errorCount = 0;
+        for (int i=0; i<poolSize; i++) {
+            stock -= orderAmount;
 
-        runOrderCallables(poolSize, 50);
+            if (stock < 0) {
+                errorCount += 1;
+            }
+        }
 
-        latch.await();
-        Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(1);
-        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
-                .isEqualTo(0);
-        // exception except 1 order
-        Assertions.assertThat(errorLatch.getCount()).isEqualTo(0);
-    }
-
-    @Test
-    void createOrderMultiThreadMultipleOrderPass() throws InterruptedException {
-        int poolSize = 10;
-        int orderAmount = 5;
-
-        runOrderCallables(poolSize, orderAmount);
-
-        latch.await();
-        Assertions.assertThat(orderRepository.findAll().size()).isEqualTo(poolSize);
-        // no exception
-        Assertions.assertThat(errorLatch.getCount()).isEqualTo(poolSize - 1);
-        Assertions.assertThat(productRepository.findById(savedProduct.getId()).get().getStock())
-                .isEqualTo(0);
+        return errorCount;
     }
 
     static class CreateOrderCallable implements Callable<Order> {
@@ -114,18 +141,19 @@ class CommerceApplicationTests {
         private final List<OrderLineRequestDto> orderLineRequestDtos;
         private final OrderService orderService;
 
-        private final CountDownLatch errorLatch;
+        private final AtomicInteger errorCount;
+
 
         public CreateOrderCallable(
                 OrderService orderService,
                 List<OrderLineRequestDto> orderLines,
                 CountDownLatch latch,
-                CountDownLatch errorLatch
+                AtomicInteger errorCount
         ) {
             this.orderService = orderService;
             this.orderLineRequestDtos = orderLines;
             this.latch = latch;
-            this.errorLatch = errorLatch;
+            this.errorCount = errorCount;
         }
 
         @Override
@@ -136,8 +164,7 @@ class CommerceApplicationTests {
                 );
 
             } catch (OrderFailureException e) {
-                errorLatch.countDown();
-
+                errorCount.getAndAdd(1);
             } finally {
                 latch.countDown();
             }

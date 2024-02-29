@@ -1,0 +1,71 @@
+version: '3'
+
+services:
+  database:
+    container_name: mysql_db
+    image: mysql/mysql-server:8.0.3
+    environment:
+      MYSQL_DATABASE: shop_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    command:
+      - "mysqld"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    networks:
+      - network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+  api:
+    container_name: spring-api-server
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/shop_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - database
+      - redis
+    networks:
+      - network
+
+  admin:
+    container_name: spring-admin-server
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile-admin
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/shop_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - database
+      - redis
+    networks:
+      - network
+
+networks:
+  network:

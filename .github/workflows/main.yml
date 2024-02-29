@@ -1,0 +1,149 @@
+name: Build, Test & Deploy
+
+on:
+  push:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_API_REPOSITORY: e-commerce-api
+  ECR_ADMIN_REPOSITORY: e-commerce-admin
+
+jobs:
+  Build-and-Test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.TEST_SPRING_DATASOURCE_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.TEST_SPRING_DATASOURCE_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Build
+        run: ./gradlew build -x test
+
+      - name: Test
+        run: ./gradlew test
+        env:
+          TEST_SPRING_DATASOURCE_DRIVER: ${{ secrets.TEST_SPRING_DATASOURCE_DRIVER }}
+          TEST_SPRING_DATASOURCE_URL: ${{ secrets.TEST_SPRING_DATASOURCE_URL }}
+          TEST_REDIS_HOST: ${{ secrets.TEST_REDIS_HOST }}
+          TEST_REDIS_PORT: ${{ secrets.TEST_REDIS_PORT }}
+          TEST_SPRING_DATASOURCE_USERNAME: ${{ secrets.TEST_SPRING_DATASOURCE_USERNAME }}
+          TEST_SPRING_DATASOURCE_PASSWORD: ${{ secrets.TEST_SPRING_DATASOURCE_PASSWORD }}
+
+      - name: Notify on Slack
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == 'success' ]]; then
+            message="Build and test passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          else
+            message="Build or test failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          fi
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  Deploy:
+    needs: Build-and-Test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credential
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push API image to Amazon ECR
+        id: build-api-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG -f Dockerfile-api .
+          docker push $ECR_REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG"
+
+      - name: Build, tag, and push Admin image to Amazon ECR
+        id: build-admin-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_ADMIN_REPOSITORY:$IMAGE_TAG -f Dockerfile-admin .
+          docker push $ECR_REGISTRY/$ECR_ADMIN_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_ADMIN_REPOSITORY:$IMAGE_TAG"
+
+      - name: Fill in the new image ID in the Amazon ECS task definition for API
+        id: setting-api-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: api-task-definition.json
+          container-name: e-commerce-api
+          image: ${{ steps.build-api-image.outputs.image }}
+
+      - name: Fill in the new image ID in the Amazon ECS task definition for Admin
+        id: setting-admin-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: admin-task-definition.json
+          container-name: e-commerce-admin
+          image: ${{ steps.build-admin-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition for api
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.setting-api-task-definition.outputs.task-definition }}
+          service: e-commerce-service
+          cluster: ECommerceCluster
+          wait-for-service-stability: false
+
+      - name: Deploy Amazon ECS task definition for Admin
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.setting-admin-task-definition.outputs.task-definition }}
+          service: e-commerce-admin-service
+          cluster: ECommerceCluster
+          wait-for-service-stability: false
+
+      - name: Notify on Slack
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == 'success' ]]; then
+            message="Deploy step passed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          else
+            message="Deploy step failed for a commit in branch ${{ github.ref }} by ${{ github.actor }}"
+          fi
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

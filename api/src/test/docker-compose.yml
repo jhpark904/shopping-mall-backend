@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  database:
+    container_name: test_mysql_db
+    image: mysql/mysql-server:8.0.3
+    environment:
+      MYSQL_DATABASE: test_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    command:
+      - "mysqld"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+
+  redis:
+    container_name: test_redis
+    image: redis
+    ports:
+      - "6379:6379"
